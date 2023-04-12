@@ -37,17 +37,31 @@ public class Util {
 	 * @return true if (lower <= id <= upper) or false otherwise
 	 */
 	public static boolean checkInterval(BigInteger id, BigInteger lower, BigInteger upper) {
-		// Hint:
-		// using mod = 10, then the interval (6, 2) = (6, 7, 8, 9, 0, 1, 2)
-		// The interval (6, 2) using the notation above means; pred = 6 and node = 2
-		// if id = 4, then (6 < 4 <= 2) = false  
-		// if id = 9, then (6 < 9 <= 2) = true
-		
-		// Task: given an identifier, id: check whether pred < id <= node
-		
-		return false;
-
+	    int cmpLower = id.compareTo(lower);
+	    int cmpUpper = id.compareTo(upper);
+	    if (cmpLower >= 0 && cmpUpper <= 0) {
+	        return true;
+	    } else if (lower.equals(id) || upper.equals(id)) {
+	        return true;
+	    } else {
+	        BigInteger diff = upper.subtract(lower);
+	        BigInteger absDiff = diff.abs();
+	        BigInteger k = BigInteger.valueOf(id.bitLength());
+	        BigInteger twoToK = BigInteger.TWO.pow(k.intValue());
+	        if (absDiff.compareTo(id) > 0 && absDiff.compareTo(twoToK) <= 0) {
+	            BigInteger nextLower = lower.add(BigInteger.ONE);
+	            BigInteger prevUpper = upper.subtract(BigInteger.ONE);
+	            if (id.compareTo(nextLower) >= 0 || id.compareTo(prevUpper) <= 0) {
+	                return true;
+	            }
+	        }
+	        return false;
+	    }
 	}
+
+
+
+
 	
 	public static List<String> toString(List<NodeInterface> list) throws RemoteException {
 		List<String> nodestr = new ArrayList<String>();
