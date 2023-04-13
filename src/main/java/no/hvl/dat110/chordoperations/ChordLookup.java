@@ -4,7 +4,11 @@
 package no.hvl.dat110.chordoperations;
 
 import java.math.BigInteger;
+import java.rmi.AccessException;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -35,6 +39,7 @@ public class ChordLookup {
 		// ask this node to find the successor of key
 		
 		// get the successor of the node
+		NodeInterface succ = node.getSuccessor();
 		
 		// check that key is a member of the set {nodeid+1,...,succID} i.e. (nodeid+1 <= key <= succID) using the checkInterval
 		
@@ -44,7 +49,12 @@ public class ChordLookup {
 		
 		// do highest_pred.findSuccessor(key) - This is a recursive call until logic returns true
 				
-		return null;					
+		if(Util.checkInterval(key, node.getNodeID().add(BigInteger.ONE), succ.getNodeID())) {
+			return succ;
+		}
+		else {
+			return findHighestPredecessor(key).findSuccessor(key);
+		}
 	}
 	
 	/**
@@ -56,6 +66,7 @@ public class ChordLookup {
 	private NodeInterface findHighestPredecessor(BigInteger ID) throws RemoteException {
 		
 		// collect the entries in the finger table for this node
+		List<NodeInterface> entries = node.getFingerTable();
 		
 		// starting from the last entry, iterate over the finger table
 		
@@ -64,6 +75,31 @@ public class ChordLookup {
 		// check that finger is a member of the set {nodeID+1,...,ID-1} i.e. (nodeID+1 <= finger <= key-1) using the ComputeLogic
 		
 		// if logic returns true, then return the finger (means finger is the closest to key)
+		
+		for (int i = entries.size() - 1; i >= 0; i--) {
+		    NodeInterface finger = entries.get(i);
+		    
+		    finger = Util.getProcessStub(finger.getNodeName(), finger.getPort());
+		    
+//		    Registry registry = LocateRegistry.getRegistry(finger.getNodeName(), finger.getPort());
+//	        try {
+//				NodeInterface fingerStub = (NodeInterface) registry.lookup("NodeInterface");
+//				if(Util.checkInterval(node.getNodeID().add(BigInteger.ONE), fingerStub.getNodeID(), ID.subtract(BigInteger.ONE))) {
+//		        	return fingerStub;
+//		        }
+//			} catch (RemoteException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			} catch (NotBoundException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+		    if(Util.checkInterval(finger.getNodeID(), node.getNodeID().add(BigInteger.ONE), ID.subtract(BigInteger.ONE))) {
+	        	return finger;
+	        }
+
+	        
+		}
 		
 		return (NodeInterface) node;			
 	}

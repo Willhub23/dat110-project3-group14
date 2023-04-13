@@ -90,6 +90,7 @@ public class FileManager {
 
 		// Task1: Given a filename, make replicas and distribute them to all active
 		// peers such that: pred < replica <= peer
+		createReplicaFiles();
 
 		// Task2: assign a replica as the primary for this file. Hint, see the slide
 		// (project 3) on Canvas
