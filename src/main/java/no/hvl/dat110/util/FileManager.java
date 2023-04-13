@@ -14,6 +14,7 @@ import java.security.NoSuchAlgorithmException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
@@ -91,28 +92,65 @@ public class FileManager {
 		// Task1: Given a filename, make replicas and distribute them to all active
 		// peers such that: pred < replica <= peer
 		createReplicaFiles();
+		
+		NodeInterface primaryNode = chordnode.findSuccessor(hash);
 
-		// Task2: assign a replica as the primary for this file. Hint, see the slide
-		// (project 3) on Canvas
+		// Task3: for each replica, find its successor and call the addKey on the successor
+		for (int i = 0; i < numReplicas; i++) {
 
-		// create replicas of the filename
+		    // get the replica's id
+		    BigInteger replicaID = replicafiles[i];
 
-		// iterate over the replicas
+		    // find the successor of the replica
+		    NodeInterface successorNode = primaryNode.findSuccessor(replicaID);
 
-		// for each replica, find its successor (peer/node) by performing
-		// findSuccessor(replica)
+		    // add the replica to the successor node
+		    boolean added = false;
+		    try {
+		        successorNode.addKey(replicaID);
+		        added = true;
+		    } catch (RemoteException e) {
+		        // Replica could not be added to the node
+		    }
 
-		// call the addKey on the successor and add the replica
+		    // if the replica was successfully added to the node, increment the counter
+		    if (added) {
+		        counter++;
+		    }
+		    
+		
+		}
+		NodeInterface primary = null;
 
-		// implement a logic to decide if this successor should be assigned as the
-		// primary for the file
+	    // iterate over the replicas
+	    for (BigInteger replica : replicafiles) {
 
-		// call the saveFileContent() on the successor and set isPrimary=true if logic
-		// above is true otherwise set isPrimary=false
+	        // find the successor for the replica
+	        NodeInterface successor = chordnode.findSuccessor(replica);
 
-		// increment counter
-		return counter;
+	        // add the replica to the successor's replica set
+	        successor.addKey(replica);
+
+	        // decide if this successor should be assigned as the primary
+	        if (counter == index) {
+	            primary = successor;
+	        }
+
+	        counter++;
+	    }
+
+	    // save file content on the primary node
+	    if (primary != null) {
+	        // set isPrimary=true if this successor is assigned as primary, else false
+	        boolean isPrimary = (index == 0);
+	        primary.saveFileContent(filename, hash, bytesOfFile, isPrimary);
+	    }
+
+	    return counter;
 	}
+
+
+	
 
 	/**
 	 * 
@@ -120,25 +158,29 @@ public class FileManager {
 	 * @return list of active nodes having the replicas of this file
 	 * @throws RemoteException
 	 */
+	
 	public Set<Message> requestActiveNodesForFile(String filename) throws RemoteException {
+	    this.filename = filename;
+	    activeNodesforFile = new HashSet<Message>();
 
-		this.filename = filename;
-		activeNodesforFile = new HashSet<Message>();
+	    // generate the N replicas from the filename by calling createReplicaFiles()
+	    createReplicaFiles();
 
-		// Task: Given a filename, find all the peers that hold a copy of this file
+	    // iterate over the replicas of the file
+	    for (BigInteger replica : replicafiles) {
 
-		// generate the N replicas from the filename by calling createReplicaFiles()
+	        // for each replica, do findSuccessor(replica) that returns successor s
+	        NodeInterface successor = chordnode.findSuccessor(replica);
 
-		// iterate over the replicas of the file
+	        // get the metadata (Message) of the replica from the successor (i.e., active peer) of the file
+	        Map<BigInteger, Message> filesMetadata = successor.getFilesMetadata();
+	        Message message = filesMetadata.get(replica);
 
-		// for each replica, do findSuccessor(replica) that returns successor s.
+	        // save the metadata in the set activeNodesforFile.
+	        activeNodesforFile.add(message);
+	    }
 
-		// get the metadata (Message) of the replica from the successor (i.e., active
-		// peer) of the file
-
-		// save the metadata in the set activeNodesforFile.
-
-		return activeNodesforFile;
+	    return activeNodesforFile;
 	}
 
 	/**
