@@ -26,17 +26,12 @@ public class Util {
 	public static String activeIP = null;
 	public static int numReplicas = 4;  
 	
-	/**
-	 * This method computes (lower <= id <= upper).
-	 * To use this method to compute (lower < id <= upper), ensure that the calling method increased the lower param by 1.
-	 * To use this method to compute (lower <= id < upper), ensure that the calling method increased the upper param by 1.
-	 * To use this method to compute (lower < id < upper), ensure that the calling method increased both the lower and upper params by 1.
-	 * @param id
-	 * @param lower
-	 * @param upper
-	 * @return true if (lower <= id <= upper) or false otherwise
-	 */
 	public static boolean checkInterval(BigInteger id, BigInteger lower, BigInteger upper) {
+	    if (lower.compareTo(upper) > 0) {
+	        BigInteger temp = lower;
+	        lower = upper;
+	        upper = temp;
+	    }
 	    int cmpLower = id.compareTo(lower);
 	    int cmpUpper = id.compareTo(upper);
 	    if (cmpLower >= 0 && cmpUpper <= 0) {
@@ -48,16 +43,18 @@ public class Util {
 	        BigInteger absDiff = diff.abs();
 	        BigInteger k = BigInteger.valueOf(id.bitLength());
 	        BigInteger twoToK = BigInteger.TWO.pow(k.intValue());
-	        if (absDiff.compareTo(id) > 0 && absDiff.compareTo(twoToK) <= 0) {
+	        if (absDiff.compareTo(id) > 0 && absDiff.compareTo(twoToK) <= 0 && absDiff.compareTo(k) <= 0) {
 	            BigInteger nextLower = lower.add(BigInteger.ONE);
 	            BigInteger prevUpper = upper.subtract(BigInteger.ONE);
-	            if (id.compareTo(nextLower) >= 0 || id.compareTo(prevUpper) <= 0) {
+	            if (id.compareTo(nextLower) >= 0 && id.compareTo(prevUpper) <= 0) {
 	                return true;
 	            }
 	        }
 	        return false;
 	    }
 	}
+
+
 
 
 
